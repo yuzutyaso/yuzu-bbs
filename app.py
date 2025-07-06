@@ -38,10 +38,30 @@ class Message(db.Model):
 
 # --- アプリケーションのルーティング ---
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET'])
 def index():
-    # 投稿処理
-    if request.method == 'POST':
+    # メッセージの取得
+    # ここでデータベースエラーが発生している可能性が高いです
+    try:
+        messages = Message.query.order_by(Message.timestamp.desc()).all()
+    except Exception as e:
+        print(f"Database query error: {e}")
+        # エラー発生時は空のリストを返すなど、フォールバック処理を検討
+        messages = []
+        # または、エラーテンプレートを表示することも可能
+        # return render_template('error.html', error_message=str(e)), 500
+        
+    current_topic = "岡山アンチの投稿を永遠に規制中"
+    okayama_maxim = "岡山は最高です。"
+
+    return render_template('index.html', 
+                           messages=messages, 
+                           current_topic=current_topic,
+                           okayama_maxim=okayama_maxim)
+
+@app.route('/post', methods=['POST'])
+def post_message():
+    if request.method == 'POST': # このif文は厳密には不要ですが、明示的に残しても問題ありません
         message_content = request.form['message']
         username = request.form['name']
         seed = request.form.get('seed', '')
@@ -64,21 +84,14 @@ def index():
             
         # 通常メッセージの保存
         if message_content and username:
-            new_message = Message(username=username, message_content=message_content, seed=seed)
-            db.session.add(new_message)
-            db.session.commit()
+            try:
+                new_message = Message(username=username, message_content=message_content, seed=seed)
+                db.session.add(new_message)
+                db.session.commit()
+            except Exception as e:
+                print(f"Database insert error: {e}")
+                # エラーメッセージをユーザーに表示するなどの処理を追加することも可能
         return redirect(url_for('index'))
-
-    # メッセージの取得
-    messages = Message.query.order_by(Message.timestamp.desc()).all()
-    
-    current_topic = "岡山アンチの投稿を永遠に規制中"
-    okayama_maxim = "岡山は最高です。"
-
-    return render_template('index.html', 
-                           messages=messages, 
-                           current_topic=current_topic,
-                           okayama_maxim=okayama_maxim)
 
 @app.route('/bbs/how')
 def how_to_use():
