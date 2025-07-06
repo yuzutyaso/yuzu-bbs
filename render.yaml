@@ -1,15 +1,14 @@
 # render.yaml
-# このファイルは、プロジェクトのルートディレクトリに配置してください。
-
-- type: web
-  name: yuzu-bbs
-  env: python
-  pythonVersion: 3.10.12 # Renderがサポートする安定版のPythonバージョンを指定
-  plan: free
-  region: oregon
-  buildCommand: pip install -r requirements.txt
-  startCommand: gunicorn app:app
-  autoDeploy: true
-  envVars:
-    - key: DATABASE_URL
-      value: postgresql://bbs_user:YyVFVYn5u908BzpmaqkFQdmFkgBDVO44@dpg-d1kvc56r433s73d3490g-a/bulletin_board_data
+services:
+  - type: web
+    name: yuzu-bbs # あなたのWebサービス名に完全に一致させる
+    env: python
+    pythonVersion: 3.10.12 # これが非常に重要です
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
+    # その他の設定（もしあれば）...
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bbs-server # あなたのPostgreSQLデータベース名に完全に一致させる
+          property: connectionString
