@@ -27,7 +27,7 @@ class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False)
     message_content = db.Column(db.Text, nullable=False)
-    seed = db.Column(db.String(120), nullable=True) # SHA-256ハッシュの最初の70文字を格納するのに十分な長さ
+    seed = db.Column(db.String(120), nullable=True) # 7文字でも十分な長さ
     timestamp = db.Column(db.DateTime, default=db.func.now())
 
     def __repr__(self):
@@ -43,7 +43,7 @@ def index():
         print(f"エラー: データベースからメッセージの取得中に問題が発生しました。テーブルが存在しないか、接続に問題がある可能性があります。詳細: {e}")
         messages = []
             
-    current_topic = "岡山アンチの投稿を永遠に規制中"
+    current_topic = "新BBS　非公式"
     
     last_name = request.args.get('last_name', '')
     last_seed = request.args.get('last_seed', '')
@@ -63,9 +63,9 @@ def post_message():
 
         hashed_seed = None
         if raw_seed:
-            # シード値をSHA-256でハッシュ化し、最初の70文字を取得
-            hashed_seed = hashlib.sha256(raw_seed.encode('utf-8')).hexdigest()[:70]
-            print(f"ログ: シード値をハッシュ化しました。元のシード: '{raw_seed}' -> ハッシュ化後のシード (最初の70文字): '{hashed_seed}'") # デバッグ用ログ
+            # シード値をSHA-256でハッシュ化し、最初の7文字を取得
+            hashed_seed = hashlib.sha256(raw_seed.encode('utf-8')).hexdigest()[:7] # ここを7文字に修正
+            print(f"ログ: シード値をハッシュ化しました。元のシード: '{raw_seed}' -> ハッシュ化後のシード (最初の7文字): '{hashed_seed}'") # デバッグ用ログ
 
         # コマンドの簡易的な処理
         if message_content.startswith('/'):
