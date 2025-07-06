@@ -1,140 +1,149 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>連番を簡単に生成！！</title>
 <style>
-/* 提供されたCSSをそのまま使用 */
+/* 提供されたHTMLのstyleタグの内容をそのまま貼り付け */
 .example4 {
-    background: linear-gradient(
-        to right,
-        #e60000,
-        #f39800,
-        #fff100,
-        #009944,
-        #0068b7,
-        #1d2088,
-        #920783,
-        #e60000
-    ) 0 / 200%;
-    animation: 5s example4 linear infinite;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+background: linear-gradient(
+to right,
+#e60000,
+#f39800,
+#fff100,
+#009944,
+#0068b7,
+#1d2088,
+#920783,
+#e60000
+)
+0 / 200%;
+animation: 5s example4 linear infinite;
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
 }
 @keyframes example4 {
-    100% {
-        background-position: 200%;
-    }
+100% {
+background-position: 200%;
 }
-.dark {
-    background-color: #111;
-    color: #ddd;
+}
+.dark
+{
+background-color: #111;
+color: #ddd;
 }
 .dark input,
 .dark textarea,
 .dark button,
-.dark select {
-    background-color: #111;
-    color: #ddd;
-    border: #ddd 1px solid;
+.dark select 
+{
+background-color: #111;
+color: #ddd;
+border: #ddd 1px solid;
 }
 .dark a {
-    color: cyan;
+color: cyan;
 }
 
-/* 追加CSS：投稿テーブルの調整 */
+/* 追加：テーブルとフォームのスタイルを調整 (元HTMLに無かったが、レイアウトのため追加/調整) */
 table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
+    width: 100%; /* テーブルの幅を100%に */
+    border-collapse: collapse; /* ボーダーの重複をなくす */
+    margin-top: 20px; /* 上部に余白 */
 }
 th, td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    text-align: left;
-    vertical-align: top;
+    border: 1px solid #ccc; /* セルのボーダー */
+    padding: 8px; /* セル内の余白 */
+    text-align: left; /* テキストを左寄せ */
+    word-wrap: break-word; /* 長い単語の途中で改行 */
 }
 th {
-    background-color: #f2f2f2;
+    background-color: #eee; /* ヘッダーの背景色 */
 }
-/* メッセージ表示エリアのスクロール */
 .message-content {
-    max-height: 100px; /* 必要に応じて調整 */
-    overflow-y: auto;
     white-space: pre-wrap; /* 改行を保持 */
+}
+/* フォーム要素の幅を調整 */
+input[type="text"],
+textarea {
+    width: calc(100% - 10px); /* フォーム要素の幅を調整 */
+    padding: 5px; /* パディングを調整 */
+    margin-bottom: 5px; /* 下の余白 */
+    box-sizing: border-box; /* パディングを幅に含める */
+}
+button {
+    padding: 8px 15px; /* ボタンのパディングを調整 */
+    cursor: pointer;
 }
 </style>
 </head>
 <body>
-<table border="1"> <tr>
-        <td>
-            <a href="https://new-instance-asck.onrender.com/">Yuki Youtube</a><br>
-            <div class="example4"><h1>掲示板</h1></div>
-            新規さんへ、先ずは挨拶をしましょう。シード値は自分のidを決めるものでパスワードのようなものです。<br>
-            今の話題に勇気を出して参加してみましょう!!!<br>
-            メッセージが送れない場合はメッセージや名前が規制されている可能性があります。<br>
-            現在の推定オンライン数は不明です。<br>
-            <a href="{{ url_for('how_to_use') }}">使い方</a><br>
-            <select>
-                <option>雑談</option>
-                <option>バトルスタジアム</option>
-            </select><br>
-            
-            <form action="{{ url_for('index') }}" method="POST">
-                <label for="message"></label>
-                メッセージ <textarea
-                    name="message"
-                    rows="6"
-                    cols="100"
-                    maxlength="1000" id="msg"
-                    required
-                ></textarea><br><br>
-                <label for="name">名前 </label>
-                <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value=""
-                    maxlength="25"
-                    required
-                />
-                <label for="seed"> シード </label>
-                <input type="text" id="seed" name="seed" value="" required />
-                <button type="submit">送信する</button> </form>
-            <br>
-            スピーカー以上のメッセージのみ表示<input type="checkbox" /><br>
-            
-            <h2>投稿</h2>
-            <h3>今の話題：<font color="red">{{ current_topic }}</font><br>岡山の格言：{{ okayama_maxim }}</h3>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>名前</th>
-                        <th>投稿</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for message in messages %}
-                    <tr>
-                        <td>{{ message.id }}</td>
-                        <td>
-                            <font color="{% if loop.index % 3 == 0 %}red{% elif loop.index % 3 == 1 %}darkorange{% else %}blue{% endif %}">{{ message.username }}</font>
-                            <font color="magenta">@{{ message.seed[:7] if message.seed else '' }}</font>
-                        </td>
-                        <td><div class="message-content">{{ message.message_content }}</div></td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="3">まだ投稿はありません。</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </td>
-    </tr>
+<table border="1"> </table>
+
+<a href="https://new-instance-asck.onrender.com/">Yuki Youtube</a><br>
+<div class="example4"><h1>掲示板</h1></div>
+新規さんへ、先ずは挨拶をしましょう。シード値は自分のidを決めるものでパスワードのようなものです。<br>
+今の話題に勇気を出して参加してみましょう!!!<br>
+メッセージが送れない場合はメッセージや名前が規制されている可能性があります。<br>
+現在の推定オンライン数は不明です。<br>
+<a href="{{ url_for('how_to_use') }}">使い方</a><br>
+<select>
+<option>雑談</option>
+<option>バトルスタジアム</option>
+</select><br>
+
+<form method="POST" action="/post">
+    <label for="msg"></label>
+    メッセージ <textarea
+    name="message"
+    rows="6"
+    cols="100"
+    maxlength="100"
+    id="msg"
+    required
+    ></textarea><br><br>
+    <label for="name">名前 </label>
+    <input
+    type="text"
+    id="name"
+    name="name"
+    value=""
+    maxlength="25"
+    required
+    />
+    <label for="seed"> シード </label>
+    <input type="text" id="seed" name="seed" value="" required />
+    <button type="submit" id="submit">送信する</button>
+</form>
+<br>
+スピーカー以上のメッセージのみ表示<input type="checkbox"><br>
+<h2>投稿</h2>
+<h3>今の話題：<font color="red">{{ current_topic }}</font></h3>
+
+<table border="1">
+<tbody>
+    <tr>
+        <th>No</th>
+        <th>名前</th>
+        <th>投稿</th>
+        <th>日時</th> </tr>
+    {% if messages %}
+        {% for message in messages %}
+            <tr>
+                <td>{{ message.id }}</td>
+                <td>
+                    <font color="
+                        {% if loop.index % 2 == 0 %}red{% else %}black{% endif %}"> {{ message.username }}
+                    </font>
+                    {% if message.seed %}<font color="darkorange">@{{ message.seed }}</font>{% endif %}
+                    <font color="magenta"></font> </td>
+                <td class="message-content">{{ message.message_content }}</td>
+                <td>{{ message.timestamp.strftime('%Y/%m/%d %H:%M:%S') }}</td>
+            </tr>
+        {% endfor %}
+    {% else %}
+        <tr><td colspan="4">まだ投稿がありません。</td></tr>
+    {% endif %}
+</tbody>
 </table>
 </body>
 </html>
