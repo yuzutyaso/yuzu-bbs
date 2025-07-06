@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text # text() for raw SQL in SQLAlchemy
+from datetime import datetime # datetimeモジュールをインポート
 
 app = Flask(__name__)
 
@@ -40,33 +41,25 @@ class Message(db.Model):
 
 @app.route('/', methods=['GET'])
 def index():
-    # メッセージの取得
-    # ここでデータベースエラーが発生している可能性が高いです
     try:
         messages = Message.query.order_by(Message.timestamp.desc()).all()
     except Exception as e:
         print(f"Database query error: {e}")
-        # エラー発生時は空のリストを返すなど、フォールバック処理を検討
         messages = []
-        # または、エラーテンプレートを表示することも可能
-        # return render_template('error.html', error_message=str(e)), 500
-        
+            
     current_topic = "岡山アンチの投稿を永遠に規制中"
-    okayama_maxim = "岡山は最高です。"
 
     return render_template('index.html', 
                            messages=messages, 
-                           current_topic=current_topic,
-                           okayama_maxim=okayama_maxim)
+                           current_topic=current_topic)
 
 @app.route('/post', methods=['POST'])
 def post_message():
-    if request.method == 'POST': # このif文は厳密には不要ですが、明示的に残しても問題ありません
+    if request.method == 'POST':
         message_content = request.form['message']
         username = request.form['name']
         seed = request.form.get('seed', '')
 
-        # コマンドの簡易的な処理
         if message_content.startswith('/'):
             command_parts = message_content.split(' ')
             command = command_parts[0]
@@ -82,7 +75,6 @@ def post_message():
                     print(f"Error processing /del command: {e}")
                 return redirect(url_for('index'))
             
-        # 通常メッセージの保存
         if message_content and username:
             try:
                 new_message = Message(username=username, message_content=message_content, seed=seed)
@@ -90,7 +82,6 @@ def post_message():
                 db.session.commit()
             except Exception as e:
                 print(f"Database insert error: {e}")
-                # エラーメッセージをユーザーに表示するなどの処理を追加することも可能
         return redirect(url_for('index'))
 
 @app.route('/bbs/how')
@@ -99,10 +90,37 @@ def how_to_use():
 
 if __name__ == '__main__':
     with app.app_context():
-        # ローカル（SQLite）の場合、database.dbが存在しない時にテーブルを作成
-        # Render（PostgreSQL）の場合、DATABASE_URLが設定されていれば、テーブルを作成
-        # このdb.create_all()は、初回デプロイ時にPostgreSQLにテーブルを作成するために重要です。
-        # すでにテーブルが存在する場合は何もしません。
-        db.create_all()
+        db.create_all() # テーブル作成
+
+        # --- ここから初期データ挿入の追加コード ---
+        # "カルパス財団"のメッセージが存在するか確認
+        # id=0 は通常自動採番されるIDとは異なるため、明示的にIDを指定して挿入を試みる
+        # または、usernameとmessage_contentでユニーク性を確認
+        
+        # オプション1: id=0 で検索 (PostgreSQLでid=0をPRIMARY KEYにする場合)
+        # 注意: SQLAlchemyのデフォルト設定ではid=0の挿入は通常しません。
+        # idを自動採番させつつ、このメッセージが存在しない場合にのみ挿入する方がより安全です。
+        
+        # オプション2: 特定のユーザー名とメッセージ内容で検索（推奨）
+        kalpas_message_content = "ｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽｶﾙﾊﾟｽ"
+        kalpas_exists = Message.query.filter_by(username="カルパス財団", message_content=kalpas_message_content).first()
+
+        if not kalpas_exists:
+            # メッセージが存在しない場合のみ挿入
+            # id=0 を明示的に指定する場合は、モデルで id = db.Column(db.Integer, primary_key=True) の他に
+            # __table_args__ = {'sqlite_autoincrement': False} (SQLiteの場合)
+            # や、PostgreSQLではSERIAL/BIGSERIALではなくINTEGER型として定義する必要がある場合があります。
+            # 通常はidを自動採番に任せるのが安全なので、idは指定しない形にします。
+            print("Inserting initial 'カルパス財団' message.")
+            initial_message = Message(
+                username="カルパス財団",
+                message_content=kalpas_message_content,
+                timestamp=datetime(2025, 7, 5, 0, 0, 0) # 過去の日付を指定することで、リストの最後に来るようにする
+            )
+            db.session.add(initial_message)
+            db.session.commit()
+        else:
+            print("'カルパス財団' message already exists.")
+        # --- 初期データ挿入の追加コードここまで ---
 
     app.run(debug=True)
