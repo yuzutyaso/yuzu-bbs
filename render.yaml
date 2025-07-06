@@ -2,7 +2,7 @@
 # このファイルは、プロジェクトのルートディレクトリに配置してください。
 
 - type: web
-  name: simple-bulletin-board
+  name: yuzu-bbs
   env: python
   pythonVersion: 3.10.12 # Renderがサポートする安定版のPythonバージョンを指定
   plan: free
