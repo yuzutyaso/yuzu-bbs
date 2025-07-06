@@ -1,0 +1,17 @@
+# render.yaml
+# このファイルは、プロジェクトのルートディレクトリに配置してください。
+
+- type: web
+  name: simple-bulletin-board
+  env: python
+  plan: free
+  region: oregon
+  buildCommand: pip install -r requirements.txt
+  startCommand: gunicorn app:app
+  autoDeploy: true
+  envVars:
+    - key: DATABASE_URL
+      # Renderで作成したPostgreSQLの「Internal Database URL」をここに手動で入力してください。
+      # 例: postgresql://user:password@host:port/database_name
+      # 注意: `postgres://` で始まる場合は `postgresql://` に修正してください。
+      value: your_render_internal_database_url_here
