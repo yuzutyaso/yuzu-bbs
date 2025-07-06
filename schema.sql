@@ -1,7 +1,0 @@
-CREATE TABLE IF NOT EXISTS message (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(80) NOT NULL,
-    message_content TEXT NOT NULL,
-    seed VARCHAR(120),
-    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
