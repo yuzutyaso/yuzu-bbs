@@ -1,8 +1,8 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import text # text() for raw SQL in SQLAlchemy
-from datetime import datetime # datetimeモジュールをインポート
+from sqlalchemy import text
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -12,21 +12,21 @@ app = Flask(__name__)
 if os.environ.get('DATABASE_URL'):
     # PostgreSQL接続の場合
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL').replace("postgres://", "postgresql://", 1)
-    print(f"Connecting to PostgreSQL: {app.config['SQLALCHEMY_DATABASE_URI']}") # ログ出力で確認
+    print(f"Connecting to PostgreSQL: {app.config['SQLALCHEMY_DATABASE_URI']}")
 else:
     # ローカル開発用のSQLite設定
     basedir = os.path.abspath(os.path.dirname(__file__))
     sqlite_db_path = os.path.join(basedir, 'database.db')
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + sqlite_db_path
-    print(f"Connecting to SQLite: {app.config['SQLALCHEMY_DATABASE_URI']}") # ログ出力で確認
+    print(f"Connecting to SQLite: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # シグナル追跡を無効化（推奨）
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
 # --- データベースモデルの定義 ---
 class Message(db.Model):
-    __tablename__ = 'message' # テーブル名を明示的に 'message' に設定
+    __tablename__ = 'message'
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False)
@@ -41,29 +41,26 @@ class Message(db.Model):
 
 @app.route('/', methods=['GET'])
 def index():
-    # ホームページの表示ロジック
-    # GETリクエストのみを処理します
     try:
         messages = Message.query.order_by(Message.timestamp.desc()).all()
     except Exception as e:
         print(f"Database query error: {e}")
-        # エラー発生時は空のリストを返すなど、フォールバック処理を検討
-        messages = []
-        # または、エラーテンプレートを表示することも可能
-        # return render_template('error.html', error_message=str(e)), 500
+        messages = [] # エラー時は空のリストを返す
             
     current_topic = "岡山アンチの投稿を永遠に規制中"
+    
+    # 名前とシード値の保持のためにURLパラメータから取得
+    last_name = request.args.get('last_name', '')
+    last_seed = request.args.get('last_seed', '')
 
     return render_template('index.html', 
                            messages=messages, 
-                           current_topic=current_topic)
+                           current_topic=current_topic,
+                           last_name=last_name, # HTMLに渡す
+                           last_seed=last_seed) # HTMLに渡す
 
-# ここが「Method Not Allowed」エラーを解決するための主要な部分です
-# /post ルートはPOSTメソッドを許可するように明示的に設定されています。
 @app.route('/post', methods=['POST'])
 def post_message():
-    # 投稿処理ロジック
-    # POSTリクエストのみを処理します
     if request.method == 'POST': 
         message_content = request.form['message']
         username = request.form['name']
@@ -93,8 +90,13 @@ def post_message():
                 db.session.commit()
             except Exception as e:
                 print(f"Database insert error: {e}")
-                # エラーメッセージをユーザーに表示するなどの処理を追加することも可能
-        return redirect(url_for('index'))
+                # エラー発生時はメッセージをログに出力
+                # この場合はリダイレクトしつつ、ユーザーには成功したかのように見えてしまう
+                # より良いエラーハンドリングが必要な場合は、ここでエラーメッセージを表示するテンプレートを返すなど
+        
+        # 投稿後、名前とシードをURLパラメータとして渡してリダイレクト
+        # これにより、GETリクエストでlast_nameとlast_seedとして受け取れる
+        return redirect(url_for('index', last_name=username, last_seed=seed))
 
 @app.route('/bbs/how')
 def how_to_use():
@@ -113,12 +115,12 @@ if __name__ == '__main__':
             initial_message = Message(
                 username="カルパス財団",
                 message_content=kalpas_message_content,
-                timestamp=datetime(2025, 7, 5, 0, 0, 0) # 過去の日付を指定することで、リストの最後に来るようにする
+                # 過去の日付を指定することで、リストの最後に表示されるようにする
+                timestamp=datetime(2025, 7, 5, 0, 0, 0)
             )
             db.session.add(initial_message)
             db.session.commit()
         else:
             print("'カルパス財団' message already exists.")
-        # --- 初期データ挿入ここまで ---
 
     app.run(debug=True)
