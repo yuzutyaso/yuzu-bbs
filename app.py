@@ -27,7 +27,7 @@ class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False)
     message_content = db.Column(db.Text, nullable=False)
-    seed = db.Column(db.String(120), nullable=True) # 7文字でも十分な長さ
+    seed = db.Column(db.String(120), nullable=True)
     timestamp = db.Column(db.DateTime, default=db.func.now())
 
     def __repr__(self):
@@ -43,7 +43,7 @@ def index():
         print(f"エラー: データベースからメッセージの取得中に問題が発生しました。テーブルが存在しないか、接続に問題がある可能性があります。詳細: {e}")
         messages = []
             
-    current_topic = "新BBS　非公式"
+    current_topic = "岡山アンチの投稿を永遠に規制中"
     
     last_name = request.args.get('last_name', '')
     last_seed = request.args.get('last_seed', '')
@@ -59,15 +59,13 @@ def post_message():
     if request.method == 'POST': 
         message_content = request.form['message']
         username = request.form['name']
-        raw_seed = request.form.get('seed', '') # 生のシード値を取得
+        raw_seed = request.form.get('seed', '')
 
         hashed_seed = None
         if raw_seed:
-            # シード値をSHA-256でハッシュ化し、最初の7文字を取得
-            hashed_seed = hashlib.sha256(raw_seed.encode('utf-8')).hexdigest()[:7] # ここを7文字に修正
-            print(f"ログ: シード値をハッシュ化しました。元のシード: '{raw_seed}' -> ハッシュ化後のシード (最初の7文字): '{hashed_seed}'") # デバッグ用ログ
+            hashed_seed = hashlib.sha256(raw_seed.encode('utf-8')).hexdigest()[:7]
+            print(f"ログ: シード値をハッシュ化しました。元のシード: '{raw_seed}' -> ハッシュ化後のシード (最初の7文字): '{hashed_seed}'")
 
-        # コマンドの簡易的な処理
         if message_content.startswith('/'):
             command_parts = message_content.split(' ')
             command = command_parts[0]
@@ -83,10 +81,8 @@ def post_message():
                     print(f"エラー: /del コマンドの処理中に問題が発生しました。指定されたIDが見つからないか、データベース操作に失敗しました。詳細: {e}")
                 return redirect(url_for('index'))
             
-        # 通常メッセージの保存
         if message_content and username:
             try:
-                # ハッシュ化されたシード値を使用
                 new_message = Message(username=username, message_content=message_content, seed=hashed_seed)
                 db.session.add(new_message)
                 db.session.commit()
@@ -94,7 +90,6 @@ def post_message():
             except Exception as e:
                 print(f"エラー: メッセージのデータベースへの保存中に問題が発生しました。データベース接続やテーブル構造を確認してください。詳細: {e}")
         
-        # 投稿後、名前と生のシード値をURLパラメータとして渡してリダイレクト（入力フィールドに再表示するため）
         return redirect(url_for('index', last_name=username, last_seed=raw_seed))
 
 @app.route('/bbs/how')
@@ -102,11 +97,6 @@ def how_to_use():
     return "<h1>使い方ページ（準備中）</h1><p>ここに掲示板の使い方が記載されます。</p><a href='/'>掲示板に戻る</a>"
 
 if __name__ == '__main__':
-    with app.app_context():
-        try:
-            db.create_all() # テーブル作成
-            print("ログ: データベーステーブルの作成を試みました。")
-        except Exception as e:
-            print(f"エラー: データベーステーブルの作成中に問題が発生しました。データベースの接続設定や権限を確認してください。詳細: {e}")
-
+    # Renderデプロイ時にテーブルを作成するロジックはrender.yamlのstartCommandに移動しました。
+    # ここはローカルでの開発・テスト用に残します。
     app.run(debug=True)
