@@ -4,6 +4,7 @@
 - type: web
   name: simple-bulletin-board
   env: python
+  pythonVersion: 3.10.12 # Renderがサポートする安定版のPythonバージョンを指定
   plan: free
   region: oregon
   buildCommand: pip install -r requirements.txt
@@ -11,7 +12,4 @@
   autoDeploy: true
   envVars:
     - key: DATABASE_URL
-      # Renderで作成したPostgreSQLの「Internal Database URL」をここに手動で入力してください。
-      # 例: postgresql://user:password@host:port/database_name
-      # 注意: `postgres://` で始まる場合は `postgresql://` に修正してください。
-      value: your_render_internal_database_url_here
+      value: postgresql://bbs_user:YyVFVYn5u908BzpmaqkFQdmFkgBDVO44@dpg-d1kvc56r433s73d3490g-a/bulletin_board_data
