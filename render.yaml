@@ -6,8 +6,8 @@ services:
     pythonVersion: 3.10.12 # これが非常に重要です
     buildCommand: "pip install -r requirements.txt"
     startCommand: "gunicorn app:app"
-    # その他の設定（もしあれば）...
     envVars:
+      # DATABASE_URLをRenderのデータベースサービスから自動的に取得
       - key: DATABASE_URL
         fromDatabase:
           name: bbs-server # あなたのPostgreSQLデータベース名に完全に一致させる
